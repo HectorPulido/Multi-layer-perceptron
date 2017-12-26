@@ -1,0 +1,6 @@
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\bin\Debug\PerceptronMejorado.exe.config
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\bin\Debug\PerceptronMejorado.exe
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\bin\Debug\PerceptronMejorado.pdb
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.csprojResolveAssemblyReference.cache
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.exe
+c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.pdb
