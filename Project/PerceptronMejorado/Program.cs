@@ -8,20 +8,20 @@ namespace PerceptronVideo
 {
     class Program
     {
-        static string inputPath = @"C:\Users\ASUS\Documents\Visual Studio 2015\Projects\PerceptronMejorado\DatosIris.txt";
-        static string outputPath = @"C:\Users\ASUS\Documents\Visual Studio 2015\Projects\PerceptronMejorado\salida.csv";
-        static string neuralNetworkPath = @"C:\Users\ASUS\Documents\Visual Studio 2015\Projects\PerceptronMejorado\NN.bin";
+        static string inputPath = @"..\..\..\DataSets\AND.csv";
+        static string outputPath = @"..\..\..\DataSets\salida.csv";
+        static string neuralNetworkPath = @"..\..\..\DataSets\NN.bin";
 
-        static int inputCount = 4;
+        static int inputCount = 2;
         static int outputCount = 1;
 
-        static bool saveNetwork = false;
-        static bool loadNetwork = false;
+        static bool saveNetwork = true;
+        static bool loadNetwork = true;
 
-        static double inputMax = 10;
+        static double inputMax = 1;
         static double inputMin = 0;
 
-        static double outputMax = 3;
+        static double outputMax = 1;
         static double outputMin = 0;
 
         static List<double[]> input = new List<double[]>();
@@ -88,55 +88,24 @@ namespace PerceptronVideo
         {
             Perceptron p;
 
+            int[] net_def = new int[] { inputCount, 10, 10, outputCount };
+            double learning_rate = 0.3;
+            double max_error = 0.0001;
+            int max_iter = 1000000;
+
             if (!loadNetwork)
             {
                 ReadData();
-                p = new Perceptron(new int[] { inputCount,5,5, outputCount });
+                p = new Perceptron(net_def);
 
-                while (!p.Learn(input, output, 0.05, 0.01, 3000000))
+                while (!p.Learn(input, output, learning_rate, max_error, max_iter, neuralNetworkPath, 10000))
                 {
-                    p = new Perceptron(new int[] { inputCount,5,5, outputCount });
-                }
-
-                if (saveNetwork)
-                {
-                    FileStream fs = new FileStream(neuralNetworkPath, FileMode.Create);
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    try
-                    {
-                        formatter.Serialize(fs, p);
-                    }
-                    catch (SerializationException e)
-                    {
-                        Console.WriteLine("Failed to serialize. Reason: " + e.Message);
-                        throw;
-                    }
-                    finally
-                    {
-                        fs.Close();
-                    }
-                }
+                    p = new Perceptron(net_def);
+                }              
             }
             else
             {
-                FileStream fs = new FileStream(neuralNetworkPath, FileMode.Open);
-                try
-                {
-                    BinaryFormatter formatter = new BinaryFormatter();
-
-                    // Deserialize the hashtable from the file and 
-                    // assign the reference to the local variable.
-                    p = (Perceptron)formatter.Deserialize(fs);
-                }
-                catch (SerializationException e)
-                {
-                    Console.WriteLine("Failed to deserialize. Reason: " + e.Message);
-                    throw;
-                }
-                finally
-                {
-                    fs.Close();
-                }
+                p = Perceptron.Load(neuralNetworkPath);
             }
 
 
@@ -207,7 +176,7 @@ namespace PerceptronVideo
             return err;
         }
         List<string> log;
-        public bool Learn(List<double[]> input, List<double[]> desiredOutput, double alpha, double maxError, int maxIterations)
+        public bool Learn(List<double[]> input, List<double[]> desiredOutput, double alpha, double maxError, int maxIterations, String net_path=null, int iter_save=1)
         {
             double err = 99999;
             log = new List<string>();
@@ -217,27 +186,40 @@ namespace PerceptronVideo
                 ApplyBackPropagation(input, desiredOutput, alpha);
                 err = GeneralError(input, desiredOutput);
 
-                Console.WriteLine(err + " iterations: " + (it - maxIterations));
+
+                if ((it - maxIterations) % 1000 ==0) {
+                    Console.WriteLine(err + " iterations: " + (it - maxIterations));
+                }
+
+
+                if (net_path != null)
+                {
+                    if ((it - maxIterations) % iter_save == 0)
+                    {
+                        save_net(net_path);
+                        Console.WriteLine("Save net to "+ net_path);
+                    }
+                }
 
                 log.Add(err.ToString());                
                 maxIterations--;
 
                 if (Console.KeyAvailable)
                 {
-                    System.IO.File.WriteAllLines(@"C:\Users\ASUS\LogTail.txt", log.ToArray());
+                    System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
                     return true;
                 }
 
                 if (maxIterations <= 0)
                 {
                     Console.WriteLine("MINIMO LOCAL");
-                    System.IO.File.WriteAllLines(@"C:\Users\ASUS\LogTail.txt", log.ToArray());
+                    System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
                     return false;
                 }
 
             }
             
-            System.IO.File.WriteAllLines(@"C:\Users\ASUS\LogTail.txt", log.ToArray());
+            System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
             return true;
         }
 
@@ -328,6 +310,50 @@ namespace PerceptronVideo
             }
             UpdateWeights(alpha);
 
+        }
+
+        public void save_net(String neuralNetworkPath)
+        {
+            FileStream fs = new FileStream(neuralNetworkPath, FileMode.Create);
+            BinaryFormatter formatter = new BinaryFormatter();
+            try
+            {
+                formatter.Serialize(fs, this);
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs.Close();
+            }
+        }
+
+        public static Perceptron Load(String neuralNetworkPath)
+        {
+            FileStream fs = new FileStream(neuralNetworkPath, FileMode.Open);
+            Perceptron p = null;
+            try
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+
+                // Deserialize the hashtable from the file and 
+                // assign the reference to the local variable.
+                p = (Perceptron)formatter.Deserialize(fs);
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine("Failed to deserialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs.Close();
+            }
+
+            return p;
         }
     }
 
